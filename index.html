@@ -83,7 +83,6 @@
     <div class="tab" data-tab="shop">🛒 Магазин</div>
   </div>
 
-  <!-- Крутки -->
   <div id="tab-wish" class="tab-content active">
     <div class="wish-grid">
       <div>
@@ -97,11 +96,9 @@
     </div>
   </div>
 
-  <!-- Карта -->
   <div id="tab-map" class="tab-content">
     <div class="map-toolbar">
-      <!-- 👇 ВОТ СТРОКА ДЛЯ ССЫЛКИ НА КАРТУ 👇 -->
-      <input type="text" id="mapUrlInput" placeholder="🔗 Вставьте URL карты (например, https://example.com/map.jpg)">
+      <input type="text" id="mapUrlInput" placeholder="🔗 Вставьте URL карты">
       <button class="btn small" onclick="loadMapFromUrl()">📥 Загрузить карту</button>
       <button class="btn small" onclick="resetMapImage()">🔄 Сбросить карту</button>
       <br>
@@ -124,7 +121,6 @@
     <div class="hint">🖱️ Перетаскивайте метки | Колёсико — зум | Клик по карте — новая метка</div>
   </div>
 
-  <!-- Мини-игры -->
   <div id="tab-games" class="tab-content">
     <div class="game-area">
       <div class="game-card">
@@ -144,7 +140,6 @@
     </div>
   </div>
 
-  <!-- Лидерборд -->
   <div id="tab-leaderboard" class="tab-content">
     <div class="leaderboard">
       <h3 style="color:#f7c75b;margin-bottom:16px;">🏆 Топ игроков</h3>
@@ -152,7 +147,6 @@
     </div>
   </div>
 
-  <!-- Магазин -->
   <div id="tab-shop" class="tab-content">
     <div class="shop-card">
       <h3 style="color:#f7c75b;margin-bottom:16px;">🛒 Магазин</h3>
@@ -169,7 +163,6 @@
   </div>
 </div>
 
-<!-- Модальное окно -->
 <div class="modal" id="authModal">
   <div class="modal-content">
     <div class="modal-title">Вход / Регистрация</div>
@@ -211,16 +204,9 @@
     if (!login || !password) return alert('Заполните все поля');
     if (users[login]) return alert('Пользователь уже существует');
     users[login] = { 
-      password, 
-      points: 0, 
-      markers: [], 
-      wishData: {}, 
-      dailyDate: getToday(), 
-      memoryPlays: 0, 
-      guessPlays: 0, 
-      blessings: 0,
-      memoryScore: 0,
-      guessScore: 0
+      password, points: 0, markers: [], wishData: {}, 
+      dailyDate: getToday(), memoryPlays: 0, guessPlays: 0, 
+      blessings: 0, memoryScore: 0, guessScore: 0
     };
     saveUsers();
     currentUser = login;
@@ -306,10 +292,7 @@
   function loadUserData() {
     if (!currentUser) return;
     const u = users[currentUser];
-    if (u.markers && u.markers.length > 0) { 
-      mapState.markers = u.markers; 
-      renderAllMarkers(); 
-    }
+    if (u.markers && u.markers.length > 0) { mapState.markers = u.markers; renderAllMarkers(); }
     if (u.wishData) { 
       document.getElementById('pity5').value = u.wishData.pity5 || 0; 
       document.getElementById('pity4').value = u.wishData.pity4 || 0; 
@@ -370,25 +353,23 @@
   }
   calculateWish();
 
-  // ==================== КАРТА ====================
+  // ==================== КАРТА (ПОЛНОСТЬЮ ИСПРАВЛЕННОЕ ПЕРЕТАСКИВАНИЕ) ====================
   const mapWrapper = document.getElementById('mapWrapper');
   const mapImage = document.getElementById('mapImage');
   const mapOverlay = document.getElementById('mapOverlay');
   let mapState = { scale: 0.45, offsetX: 0, offsetY: 0, markers: [], selectedMarkerId: null };
   let isPanning = false, panStart = {x:0, y:0}, panStartOffset = {x:0, y:0}, hasMoved = false;
-  let dragMarker = null, dragStartPos = null, dragStartMarkerPos = null;
-  let dragStartScale = null;
-  const DEFAULT_MAP_URL = 'https://cdn.discordapp.com/attachments/1420821297700671560/1513235705307074710/image.png?ex=6a26fe12&is=6a25ac92&hm=2b8d9dc1a08ed5b713462e005a12f94c5f8e70b122921534afcf4dee520f8ec1&';
+  let dragMarker = null, dragStartMouse = null, dragStartMarkerPos = null;
+  const DEFAULT_MAP_URL = 'https://genshin-impact-map.appsample.com/assets/map_teyvat_full.jpg';
 
   function handleMapError() {
-    console.log('Карта не загрузилась, используйте поле для ввода URL');
+    console.log('Карта не загрузилась');
     mapImage.src = DEFAULT_MAP_URL;
   }
 
-  // 👇 ФУНКЦИЯ ЗАГРУЗКИ КАРТЫ ПО URL ИЗ СТРОКИ ВВОДА 👇
   window.loadMapFromUrl = function() {
     const url = document.getElementById('mapUrlInput').value.trim();
-    if (!url) return alert('https://cdn.discordapp.com/attachments/1420821297700671560/1513235705307074710/image.png?ex=6a26fe12&is=6a25ac92&hm=2b8d9dc1a08ed5b713462e005a12f94c5f8e70b122921534afcf4dee520f8ec1&');
+    if (!url) return alert('Введите URL карты');
     mapImage.src = url;
     setTimeout(updateMapSize, 100);
   };
@@ -407,12 +388,8 @@
   }
 
   function saveMapState() {
-    if (currentUser) { 
-      users[currentUser].markers = mapState.markers; 
-      saveUsers(); 
-    } else { 
-      localStorage.setItem('genshin_map_v2', JSON.stringify(mapState.markers)); 
-    }
+    if (currentUser) { users[currentUser].markers = mapState.markers; saveUsers(); } 
+    else { localStorage.setItem('genshin_map_v2', JSON.stringify(mapState.markers)); }
   }
 
   function applyTransform() { 
@@ -450,37 +427,35 @@
     const icons = {'обычная':'🔵','анемокул':'🍃','геокул':'🪨','электрокул':'⚡','дендрокул':'🌿','сундук':'📦','загадка':'🧩'};
     el.textContent = icons[m.type] || '📍';
     el.title = m.type;
+    
     el.addEventListener('mousedown', e => {
       if (e.button !== 0) return;
       e.stopPropagation();
+      e.preventDefault();
       selectMarker(m.id);
       dragMarker = m;
-      dragStartPos = { x: e.clientX, y: e.clientY };
+      dragStartMouse = { x: e.clientX, y: e.clientY };
       dragStartMarkerPos = { x: m.x, y: m.y };
     });
+    
     return el;
   }
 
   window.addEventListener('mousemove', e => {
-      if (dragMarker) {
-          e.preventDefault();
-          const dx = e.clientX - dragStartPos.x;
-          const dy = e.clientY - dragStartPos.y;
-          const s = getImageNaturalSize();
-          const currentScale = dragStartScale || mapState.scale;
-          const imgW = s.width * currentScale;
-          const imgH = s.height * currentScale;
-          
-          // Переводим пиксели в проценты относительно размеров изображения
-          const deltaXPercent = (dx / imgW) * 100;
-          const deltaYPercent = (dy / imgH) * 100;
-          
-          dragMarker.x = Math.min(100, Math.max(0, dragStartMarkerPos.x + deltaXPercent));
-          dragMarker.y = Math.min(100, Math.max(0, dragStartMarkerPos.y + deltaYPercent));
-          
-          updateAllMarkerPositions();
-          saveMapState();
-      } else if (isPanning) {
+    if (dragMarker) {
+      e.preventDefault();
+      const dx = e.clientX - dragStartMouse.x;
+      const dy = e.clientY - dragStartMouse.y;
+      const s = getImageNaturalSize();
+      const imgW = s.width * mapState.scale;
+      const imgH = s.height * mapState.scale;
+      
+      dragMarker.x = Math.min(100, Math.max(0, dragStartMarkerPos.x + (dx / imgW) * 100));
+      dragMarker.y = Math.min(100, Math.max(0, dragStartMarkerPos.y + (dy / imgH) * 100));
+      
+      updateAllMarkerPositions();
+      saveMapState();
+    } else if (isPanning) {
       const dx = e.clientX - panStart.x;
       const dy = e.clientY - panStart.y;
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
@@ -491,15 +466,13 @@
   });
 
   window.addEventListener('mouseup', () => {
-      if (dragMarker) {
-          dragMarker = null;
-          dragStartScale = null;
-          saveMapState();
-      }
-      if (isPanning) { 
-          isPanning = false; 
-          saveMapState(); 
-      }
+    if (dragMarker) {
+      dragMarker = null;
+      dragStartMouse = null;
+      dragStartMarkerPos = null;
+      saveMapState();
+    }
+    if (isPanning) { isPanning = false; saveMapState(); }
   });
 
   function updateMarkerPosition(el, m) {
@@ -596,7 +569,7 @@
   mapImage.addEventListener('load', () => { updateMapSize(); });
   loadMapState();
 
-  // ==================== МИНИ-ИГРЫ (ИСПРАВЛЕННЫЕ) ====================
+  // ==================== МИНИ-ИГРЫ ====================
   let memoryCards = [];
   let memoryFlipped = [];
   let memoryMatched = new Set();
@@ -748,7 +721,6 @@
     if (!currentUser) return alert('Войдите в аккаунт!');
     if (spendPoints(10000)) {
       users[currentUser].blessings = (users[currentUser].blessings || 0) + 1;
-      addPoints(-10000);
       saveUsers();
       alert('🌙 Благословение Луны активировано! -10000 очков');
     } else {
@@ -758,11 +730,7 @@
 
   function buyWish() {
     if (!currentUser) return alert('Войдите в аккаунт!');
-    if (spendPoints(100)) {
-      alert('Занет');
-    } else {
-      alert('Неь');
-    }
+    alert('Занет');
   }
 
   // Инициализация

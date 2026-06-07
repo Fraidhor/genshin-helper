@@ -406,9 +406,10 @@
     const mx = sx - r.left, my = sy - r.top;
     const s = getImageNaturalSize();
     const iw = s.width * mapState.scale, ih = s.height * mapState.scale;
+    // БЕЗ ОГРАНИЧЕНИЙ – можно вернуть любые проценты
     return {
-      x: Math.min(100, Math.max(0, (mx - mapState.offsetX) / iw * 100)),
-      y: Math.min(100, Math.max(0, (my - mapState.offsetY) / ih * 100))
+      x: (mx - mapState.offsetX) / iw * 100,
+      y: (my - mapState.offsetY) / ih * 100
     };
   }
 

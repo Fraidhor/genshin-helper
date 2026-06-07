@@ -462,11 +462,20 @@
 
   window.addEventListener('mousemove', e => {
     if (dragMarker) {
+      e.preventDefault();
       const dx = e.clientX - dragStartPos.x;
       const dy = e.clientY - dragStartPos.y;
       const s = getImageNaturalSize();
-      dragMarker.x = Math.min(100, Math.max(0, dragStartMarkerPos.x + (dx / (s.width * mapState.scale)) * 100));
-      dragMarker.y = Math.min(100, Math.max(0, dragStartMarkerPos.y + (dy / (s.height * mapState.scale)) * 100));
+      const imgW = s.width * mapState.scale;
+      const imgH = s.height * mapState.scale;
+      
+      // Пересчёт смещения в проценты
+      const deltaXPercent = (dx / imgW) * 100;
+      const deltaYPercent = (dy / imgH) * 100;
+      
+      dragMarker.x = Math.min(100, Math.max(0, dragStartMarkerPos.x + deltaXPercent));
+      dragMarker.y = Math.min(100, Math.max(0, dragStartMarkerPos.y + deltaYPercent));
+      
       updateAllMarkerPositions();
       saveMapState();
     } else if (isPanning) {

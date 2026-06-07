@@ -360,7 +360,7 @@
   let mapState = { scale: 0.45, offsetX: 0, offsetY: 0, markers: [], selectedMarkerId: null };
   let isPanning = false, panStart = {x:0, y:0}, panStartOffset = {x:0, y:0}, hasMoved = false;
   let dragMarker = null, dragStartMouse = null, dragStartMarkerPos = null;
-  const DEFAULT_MAP_URL = 'https://genshin-impact-map.appsample.com/assets/map_teyvat_full.jpg';
+  const DEFAULT_MAP_URL = 'https://cdn.discordapp.com/attachments/1420821297700671560/1513235705307074710/image.png?ex=6a26fe12&is=6a25ac92&hm=2b8d9dc1a08ed5b713462e005a12f94c5f8e70b122921534afcf4dee520f8ec1&';
 
   function handleMapError() {
     console.log('Карта не загрузилась');
@@ -450,8 +450,13 @@
       const imgW = s.width * mapState.scale;
       const imgH = s.height * mapState.scale;
       
-      dragMarker.x = Math.min(100, Math.max(0, dragStartMarkerPos.x + (dx / imgW) * 100));
-      dragMarker.y = Math.min(100, Math.max(0, dragStartMarkerPos.y + (dy / imgH) * 100));
+      const newX = Math.min(100, Math.max(0, dragStartMarkerPos.x + (dx / imgW) * 100));
+      const newY = Math.min(100, Math.max(0, dragStartMarkerPos.y + (dy / imgH) * 100));
+      
+      console.log('🔄 Перетаскивание: dx=' + dx + ' dy=' + dy + ' imgW=' + imgW + ' imgH=' + imgH + ' newX=' + newX + ' newY=' + newY);
+      
+      dragMarker.x = newX;
+      dragMarker.y = newY;
       
       updateAllMarkerPositions();
       saveMapState();
@@ -463,6 +468,18 @@
       mapState.offsetY = panStartOffset.y + dy;
       applyTransform();
     }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (dragMarker) {
+      console.log('🟢 Отпускание метки, финальные координаты:', dragMarker.x, dragMarker.y);
+      dragMarker = null;
+      dragStartMouse = null;
+      dragStartMarkerPos = null;
+      mapWrapper.style.backgroundColor = ''; // Убираем красный фон
+      saveMapState();
+    }
+    if (isPanning) { isPanning = false; saveMapState(); }
   });
 
   window.addEventListener('mouseup', () => {

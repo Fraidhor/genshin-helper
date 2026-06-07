@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Genshin Impact | Полный помощник</title>
-  <link href="https://cdn.discordapp.com/attachments/1420821297700671560/1513235705307074710/image.png?ex=6a26fe12&is=6a25ac92&hm=2b8d9dc1a08ed5b713462e005a12f94c5f8e70b122921534afcf4dee520f8ec1&" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Rubik', sans-serif; background: #0f131c; color: #e1dccd; min-height: 100vh; padding: 20px; }
@@ -46,7 +46,8 @@
     .marker.selected { border: 3px solid #fff; box-shadow: 0 0 18px #ffd580; }
     .marker-обычная { background: #5d6b82; } .marker-анемокул { background: #3cb4a8; } .marker-геокул { background: #c9a24e; } .marker-электрокул { background: #a45ee6; } .marker-дендрокул { background: #6db84d; } .marker-сундук { background: #c47e3b; } .marker-загадка { background: #c7607b; }
     .map-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; align-items: center; }
-    .map-toolbar select { width: auto; padding: 10px; background: #0f151f; color: #f0e9d8; border: 1px solid #364154; border-radius: 10px; }
+    .map-toolbar select, .map-toolbar input { width: auto; }
+    .map-toolbar input { flex: 1; min-width: 200px; }
     .hint { font-size: 0.85rem; color: #6e788a; margin-top: 8px; text-align: center; }
     .game-area { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     @media (max-width: 700px) { .game-area { grid-template-columns: 1fr; } }
@@ -61,6 +62,8 @@
     .modal-content { background: #1b2332; border-radius: 20px; padding: 30px; max-width: 400px; width: 90%; border: 1px solid #2f3848; }
     .modal-title { font-size: 1.3rem; font-weight: 700; color: #f7c75b; margin-bottom: 20px; text-align: center; }
     .daily-info { color: #96a0b0; font-size: 0.85rem; text-align: center; margin-top: 8px; }
+    .toggle-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .toggle-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: #c9a96e; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -80,6 +83,7 @@
     <div class="tab" data-tab="shop">🛒 Магазин</div>
   </div>
 
+  <!-- Крутки -->
   <div id="tab-wish" class="tab-content active">
     <div class="wish-grid">
       <div>
@@ -93,35 +97,54 @@
     </div>
   </div>
 
+  <!-- Карта -->
   <div id="tab-map" class="tab-content">
     <div class="map-toolbar">
-      <select id="markerType"><option value="обычная">🔵 Обычная</option><option value="анемокул">🍃 Анемокул</option><option value="геокул">🪨 Геокул</option><option value="электрокул">⚡ Электрокул</option><option value="дендрокул">🌿 Дендрокул</option><option value="сундук">📦 Сундук</option><option value="загадка">🧩 Загадка</option></select>
-      <button class="btn small" onclick="deleteSelectedMarker()">🗑️</button>
-      <button class="btn small" onclick="resetMapView()">🔄</button>
+      <!-- 👇 ВОТ СТРОКА ДЛЯ ССЫЛКИ НА КАРТУ 👇 -->
+      <input type="text" id="mapUrlInput" placeholder="🔗 Вставьте URL карты (например, https://example.com/map.jpg)">
+      <button class="btn small" onclick="loadMapFromUrl()">📥 Загрузить карту</button>
+      <button class="btn small" onclick="resetMapImage()">🔄 Сбросить карту</button>
+      <br>
+      <select id="markerType">
+        <option value="обычная">🔵 Обычная</option>
+        <option value="анемокул">🍃 Анемокул</option>
+        <option value="геокул">🪨 Геокул</option>
+        <option value="электрокул">⚡ Электрокул</option>
+        <option value="дендрокул">🌿 Дендрокул</option>
+        <option value="сундук">📦 Сундук</option>
+        <option value="загадка">🧩 Загадка</option>
+      </select>
+      <button class="btn small" onclick="deleteSelectedMarker()">🗑️ Удалить метку</button>
+      <button class="btn small" onclick="resetMapView()">🔄 Сбросить вид</button>
     </div>
-    <div class="map-wrapper" id="mapWrapper"><img id="mapImage" src="https://genshin-impact-map.appsample.com/assets/map_teyvat_full.jpg" alt="Карта" onerror="handleMapError()"><div id="mapPlaceholder" style="display:none;position:absolute;inset:0;justify-content:center;align-items:center;background:#0a0e14;color:#7f8c9a;flex-direction:column;gap:10px;"><span>🗺️ Карта не загрузилась</span><input type="file" id="customMapFile" accept="image/*"><input type="text" id="customMapUrl" placeholder="URL"><button class="btn small" onclick="loadCustomMap()">Загрузить</button></div><div class="map-overlay" id="mapOverlay"></div></div>
-    <div class="hint">🖱️ Перетаскивайте метки | Колёсико — зум | Клик — новая метка</div>
+    <div class="map-wrapper" id="mapWrapper">
+      <img id="mapImage" src="https://genshin-impact-map.appsample.com/assets/map_teyvat_full.jpg" alt="Карта Тейвата" onerror="handleMapError()">
+      <div class="map-overlay" id="mapOverlay"></div>
+    </div>
+    <div class="hint">🖱️ Перетаскивайте метки | Колёсико — зум | Клик по карте — новая метка</div>
   </div>
 
+  <!-- Мини-игры -->
   <div id="tab-games" class="tab-content">
     <div class="game-area">
       <div class="game-card">
         <h3>🧠 Memory (Найди пару)</h3>
         <p>Сыграно сегодня: <span id="memoryPlays">0</span>/5</p>
         <div class="memory-grid" id="memoryGrid"></div>
-        <button class="btn small" onclick="startMemoryGame()" style="margin-top:10px;">Новая игра</button>
+        <button class="btn small" onclick="restartMemoryGame()" style="margin-top:10px;">🔄 Новая игра</button>
       </div>
       <div class="game-card">
         <h3>🎯 Угадай число (1-100)</h3>
         <p>Сыграно сегодня: <span id="guessPlays">0</span>/5</p>
-        <input type="number" id="guessInput" min="1" max="100" placeholder="Твоё число">
-        <button class="btn small" onclick="makeGuess()" style="margin-top:6px;">Угадать</button>
+        <input type="number" id="guessInput" min="1" max="100" placeholder="Введите число">
+        <button class="btn small" onclick="makeGuess()" style="margin-top:6px;">🎯 Угадать</button>
         <p id="guessHint" style="margin-top:8px;color:#96a0b0;">Попыток: 0 / 10</p>
-        <button class="btn small" onclick="startGuessGame()" style="margin-top:6px;">Новая игра</button>
+        <button class="btn small" onclick="restartGuessGame()">🔄 Новая игра</button>
       </div>
     </div>
   </div>
 
+  <!-- Лидерборд -->
   <div id="tab-leaderboard" class="tab-content">
     <div class="leaderboard">
       <h3 style="color:#f7c75b;margin-bottom:16px;">🏆 Топ игроков</h3>
@@ -129,6 +152,7 @@
     </div>
   </div>
 
+  <!-- Магазин -->
   <div id="tab-shop" class="tab-content">
     <div class="shop-card">
       <h3 style="color:#f7c75b;margin-bottom:16px;">🛒 Магазин</h3>
@@ -137,7 +161,7 @@
         <button class="btn small" onclick="buyBlessing()">Купить (5000 🪙)</button>
       </div>
       <div class="shop-item">
-        <div><strong>🎟️ Крутка</strong><br><small>+1 виртуальная крутка</small></div>
+        <div><strong>🎟️ Крутка</strong><br><small>Виртуальная крутка</small></div>
         <button class="btn small" onclick="buyWish()">Купить (100 🪙)</button>
       </div>
       <p class="daily-info">Максимум очков: 10000 🪙</p>
@@ -145,6 +169,7 @@
   </div>
 </div>
 
+<!-- Модальное окно -->
 <div class="modal" id="authModal">
   <div class="modal-content">
     <div class="modal-title">Вход / Регистрация</div>
@@ -158,17 +183,21 @@
 </div>
 
 <script>
-  // ==================== ДАННЫЕ ====================
+  // ==================== ДАННЫЕ ПОЛЬЗОВАТЕЛЕЙ ====================
   let currentUser = null;
-  let users = JSON.parse(localStorage.getItem('genshin_users_v3') || '{}');
+  let users = JSON.parse(localStorage.getItem('genshin_users_v4') || '{}');
   const MAX_POINTS = 10000;
   const DAILY_LIMIT = 5;
 
-  function saveUsers() { localStorage.setItem('genshin_users_v3', JSON.stringify(users)); }
+  function saveUsers() { 
+    try { localStorage.setItem('genshin_users_v4', JSON.stringify(users)); } catch(e) { console.error('Ошибка сохранения:', e); }
+  }
+  
   function getToday() { return new Date().toISOString().split('T')[0]; }
+  
   function resetDailyIfNeeded(user) {
     const today = getToday();
-    if (user.dailyDate !== today) {
+    if (!user.dailyDate || user.dailyDate !== today) {
       user.dailyDate = today;
       user.memoryPlays = 0;
       user.guessPlays = 0;
@@ -181,12 +210,23 @@
     const password = document.getElementById('authPassword').value.trim();
     if (!login || !password) return alert('Заполните все поля');
     if (users[login]) return alert('Пользователь уже существует');
-    users[login] = { password, points: 0, memoryScore: 0, guessScore: 0, markers: [], wishData: {}, dailyDate: getToday(), memoryPlays: 0, guessPlays: 0, blessings: 0 };
+    users[login] = { 
+      password, 
+      points: 0, 
+      markers: [], 
+      wishData: {}, 
+      dailyDate: getToday(), 
+      memoryPlays: 0, 
+      guessPlays: 0, 
+      blessings: 0,
+      memoryScore: 0,
+      guessScore: 0
+    };
     saveUsers();
     currentUser = login;
     updateUI();
     toggleAuthModal();
-    alert('Регистрация успешна!');
+    alert('✅ Регистрация успешна!');
   }
 
   function login() {
@@ -196,6 +236,7 @@
     if (users[login].password !== password) return alert('Неверный пароль');
     currentUser = login;
     resetDailyIfNeeded(users[login]);
+    saveUsers();
     updateUI();
     toggleAuthModal();
     loadUserData();
@@ -209,7 +250,11 @@
     loadMapState();
   }
 
-  function toggleAuthModal() { document.getElementById('authModal').classList.toggle('active'); }
+  function toggleAuthModal() {
+    document.getElementById('authModal').classList.toggle('active');
+    document.getElementById('authLogin').value = '';
+    document.getElementById('authPassword').value = '';
+  }
 
   function updateUI() {
     const btn = document.getElementById('userBtn');
@@ -217,12 +262,14 @@
     if (currentUser) {
       const u = users[currentUser];
       btn.textContent = `👤 ${currentUser}`;
-      points.textContent = `🪙 ${u.points}`;
+      points.textContent = `🪙 ${u.points || 0}`;
       document.getElementById('memoryPlays').textContent = u.memoryPlays || 0;
       document.getElementById('guessPlays').textContent = u.guessPlays || 0;
     } else {
       btn.textContent = '👤 Войти';
       points.textContent = '🪙 0';
+      document.getElementById('memoryPlays').textContent = '0';
+      document.getElementById('guessPlays').textContent = '0';
     }
   }
 
@@ -248,15 +295,26 @@
     if (!currentUser) return;
     const u = users[currentUser];
     u.markers = mapState.markers;
-    u.wishData = { pity5: document.getElementById('pity5').value, pity4: document.getElementById('pity4').value, guaranteed: document.getElementById('guaranteed').checked };
+    u.wishData = { 
+      pity5: document.getElementById('pity5').value, 
+      pity4: document.getElementById('pity4').value, 
+      guaranteed: document.getElementById('guaranteed').checked 
+    };
     saveUsers();
   }
 
   function loadUserData() {
     if (!currentUser) return;
     const u = users[currentUser];
-    if (u.markers) { mapState.markers = u.markers; renderAllMarkers(); }
-    if (u.wishData) { document.getElementById('pity5').value = u.wishData.pity5 || 0; document.getElementById('pity4').value = u.wishData.pity4 || 0; document.getElementById('guaranteed').checked = u.wishData.guaranteed || false; }
+    if (u.markers && u.markers.length > 0) { 
+      mapState.markers = u.markers; 
+      renderAllMarkers(); 
+    }
+    if (u.wishData) { 
+      document.getElementById('pity5').value = u.wishData.pity5 || 0; 
+      document.getElementById('pity4').value = u.wishData.pity4 || 0; 
+      document.getElementById('guaranteed').checked = u.wishData.guaranteed || false; 
+    }
     calculateWish();
   }
 
@@ -271,6 +329,10 @@
       document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
       if (tab.dataset.tab === 'map') setTimeout(updateMapSize, 50);
       if (tab.dataset.tab === 'leaderboard') renderLeaderboard();
+      if (tab.dataset.tab === 'games') {
+        if (memoryCards.length === 0) startMemoryGame();
+        if (!guessActive) startGuessGame();
+      }
     });
   });
 
@@ -279,23 +341,28 @@
   function getFourStarProb(p) { if (p>=9) return 1; if (p===8) return 0.5; return 0.051; }
 
   function calculateWish() {
-    let p5 = Math.min(90,Math.max(0,parseInt(document.getElementById('pity5').value)||0));
-    let p4 = Math.min(10,Math.max(0,parseInt(document.getElementById('pity4').value)||0));
-    let pulls = Math.min(500,Math.max(1,parseInt(document.getElementById('pulls').value)||1));
+    let p5 = Math.min(90, Math.max(0, parseInt(document.getElementById('pity5').value) || 0));
+    let p4 = Math.min(10, Math.max(0, parseInt(document.getElementById('pity4').value) || 0));
+    let pulls = Math.min(500, Math.max(1, parseInt(document.getElementById('pulls').value) || 1));
     const guaranteed = document.getElementById('guaranteed').checked;
     const prob5 = getFiveStarProb(p5), prob4 = getFourStarProb(p4);
     let cumFail = 1, temp = p5;
-    for (let i=0;i<pulls;i++) { const pr=getFiveStarProb(temp); cumFail*=(1-pr); if(pr>=1)break; temp++; }
-    const prob3=Math.max(0,1-prob5-prob4);
-    let maxR='3★',maxP=prob3;
-    if(prob4>maxP){maxR='4★';maxP=prob4;}
-    if(prob5>maxP){maxR='5★';maxP=prob5;}
+    for (let i=0; i<pulls; i++) { 
+      const pr = getFiveStarProb(temp); 
+      cumFail *= (1-pr); 
+      if(pr>=1) break; 
+      temp++; 
+    }
+    const prob3 = Math.max(0, 1-prob5-prob4);
+    let maxR='3★', maxP=prob3;
+    if(prob4>maxP){ maxR='4★'; maxP=prob4; }
+    if(prob5>maxP){ maxR='5★'; maxP=prob5; }
     document.getElementById('resultsContainer').innerHTML = `
       <div class="result-item"><span class="result-label">Шанс 5★</span><span class="result-value gold">${(prob5*100).toFixed(2)}%</span></div>
       <div class="result-item"><span class="result-label">Шанс 4★</span><span class="result-value purple">${(prob4*100).toFixed(2)}%</span></div>
       <div class="result-item"><span class="result-label">До гаранта 5★</span><span class="result-value">${90-p5} круток</span></div>
       <div class="result-item"><span class="result-label">До гаранта 4★</span><span class="result-value">${10-p4} круток</span></div>
-      <div class="result-item"><span class="result-label">Статус</span><span class="result-value">${guaranteed?'100% ивент':'50/50'}</span></div>
+      <div class="result-item"><span class="result-label">Статус</span><span class="result-value">${guaranteed ? '✅ 100% ивент' : '⚠️ 50/50'}</span></div>
       <div class="result-item"><span class="result-label">Вероятность 5★ за ${pulls} круток</span><span class="result-value gold">${((1-cumFail)*100).toFixed(2)}%</span></div>
       <div class="result-item"><span class="result-label">Скорее всего</span><span class="result-value">${maxR} (${(maxP*100).toFixed(1)}%)</span></div>
     `;
@@ -304,43 +371,219 @@
   calculateWish();
 
   // ==================== КАРТА ====================
-  const mapWrapper=document.getElementById('mapWrapper'),mapImage=document.getElementById('mapImage'),mapOverlay=document.getElementById('mapOverlay'),mapPlaceholder=document.getElementById('mapPlaceholder');
-  let mapState={scale:0.45,offsetX:0,offsetY:0,markers:[],selectedMarkerId:null};
-  let isPanning=false,panStart={x:0,y:0},panStartOffset={x:0,y:0},hasMoved=false,dragMarker=null,dragStartPos=null,dragStartMarkerPos=null;
+  const mapWrapper = document.getElementById('mapWrapper');
+  const mapImage = document.getElementById('mapImage');
+  const mapOverlay = document.getElementById('mapOverlay');
+  let mapState = { scale: 0.45, offsetX: 0, offsetY: 0, markers: [], selectedMarkerId: null };
+  let isPanning = false, panStart = {x:0, y:0}, panStartOffset = {x:0, y:0}, hasMoved = false;
+  let dragMarker = null, dragStartPos = null, dragStartMarkerPos = null;
+  const DEFAULT_MAP_URL = 'https://genshin-impact-map.appsample.com/assets/map_teyvat_full.jpg';
 
-  function handleMapError(){mapImage.style.display='none';mapPlaceholder.style.display='flex';}
-  window.loadCustomMap=function(){
-    const f=document.getElementById('customMapFile'),u=document.getElementById('customMapUrl');
-    if(f.files[0]){const r=new FileReader();r.onload=e=>{mapImage.src=e.target.result;mapImage.style.display='block';mapPlaceholder.style.display='none';setTimeout(updateMapSize,100);};r.readAsDataURL(f.files[0]);}
-    else if(u.value.trim()){mapImage.src=u.value.trim();mapImage.style.display='block';mapPlaceholder.style.display='none';setTimeout(updateMapSize,100);}
+  function handleMapError() {
+    console.log('Карта не загрузилась, используйте поле для ввода URL');
+    mapImage.src = DEFAULT_MAP_URL;
+  }
+
+  // 👇 ФУНКЦИЯ ЗАГРУЗКИ КАРТЫ ПО URL ИЗ СТРОКИ ВВОДА 👇
+  window.loadMapFromUrl = function() {
+    const url = document.getElementById('mapUrlInput').value.trim();
+    if (!url) return alert('https://cdn.discordapp.com/attachments/1420821297700671560/1513235705307074710/image.png?ex=6a26fe12&is=6a25ac92&hm=2b8d9dc1a08ed5b713462e005a12f94c5f8e70b122921534afcf4dee520f8ec1&');
+    mapImage.src = url;
+    setTimeout(updateMapSize, 100);
   };
-  function loadMapState(){const saved=currentUser?users[currentUser].markers:JSON.parse(localStorage.getItem('genshin_map_v2')||'null');if(saved)mapState.markers=saved;applyTransform();renderAllMarkers();}
-  function saveMapState(){if(currentUser){users[currentUser].markers=mapState.markers;saveUsers();}else localStorage.setItem('genshin_map_v2',JSON.stringify(mapState.markers));}
-  function applyTransform(){mapImage.style.transform=`translate(${mapState.offsetX}px,${mapState.offsetY}px) scale(${mapState.scale})`;updateAllMarkerPositions();}
-  function getImageNaturalSize(){return{width:mapImage.naturalWidth||2400,height:mapImage.naturalHeight||1600};}
-  function screenToImageCoords(sx,sy){const r=mapWrapper.getBoundingClientRect(),mx=sx-r.left,my=sy-r.top,s=getImageNaturalSize(),iw=s.width*mapState.scale,ih=s.height*mapState.scale;return{x:Math.min(100,Math.max(0,(mx-mapState.offsetX)/iw*100)),y:Math.min(100,Math.max(0,(my-mapState.offsetY)/ih*100))};}
-  function imageToScreenCoords(px,py){const s=getImageNaturalSize(),iw=s.width*mapState.scale,ih=s.height*mapState.scale;return{left:mapState.offsetX+(px/100)*iw,top:mapState.offsetY+(py/100)*ih};}
-  function createMarkerElement(m){const el=document.createElement('div');el.className=`marker marker-${m.type}`;el.dataset.id=m.id;const icons={'обычная':'🔵','анемокул':'🍃','геокул':'🪨','электрокул':'⚡','дендрокул':'🌿','сундук':'📦','загадка':'🧩'};el.textContent=icons[m.type]||'📍';el.title=m.type;el.addEventListener('mousedown',e=>{if(e.button!==0)return;e.stopPropagation();selectMarker(m.id);dragMarker=m;dragStartPos={x:e.clientX,y:e.clientY};dragStartMarkerPos={x:m.x,y:m.y};});return el;}
-  window.addEventListener('mousemove',e=>{if(dragMarker){const dx=e.clientX-dragStartPos.x,dy=e.clientY-dragStartPos.y,s=getImageNaturalSize();dragMarker.x=Math.min(100,Math.max(0,dragStartMarkerPos.x+(dx/(s.width*mapState.scale))*100));dragMarker.y=Math.min(100,Math.max(0,dragStartMarkerPos.y+(dy/(s.height*mapState.scale))*100));updateAllMarkerPositions();saveMapState();}else if(isPanning){const dx=e.clientX-panStart.x,dy=e.clientY-panStart.y;if(Math.abs(dx)>3||Math.abs(dy)>3)hasMoved=true;mapState.offsetX=panStartOffset.x+dx;mapState.offsetY=panStartOffset.y+dy;applyTransform();}});
-  window.addEventListener('mouseup',()=>{dragMarker=null;if(isPanning){isPanning=false;saveMapState();}});
-  function updateMarkerPosition(el,m){const p=imageToScreenCoords(m.x,m.y);el.style.left=p.left+'px';el.style.top=p.top+'px';}
-  function updateAllMarkerPositions(){mapOverlay.querySelectorAll('.marker').forEach(el=>{const id=parseInt(el.dataset.id),m=mapState.markers.find(mm=>mm.id===id);if(m)updateMarkerPosition(el,m);});}
-  function renderAllMarkers(){mapOverlay.innerHTML='';mapState.markers.forEach(m=>{const el=createMarkerElement(m);mapOverlay.appendChild(el);updateMarkerPosition(el,m);if(m.id===mapState.selectedMarkerId)el.classList.add('selected');});}
-  function addMarker(type,x,y){const nm={id:Date.now(),type,x,y};mapState.markers.push(nm);const el=createMarkerElement(nm);mapOverlay.appendChild(el);updateMarkerPosition(el,nm);selectMarker(nm.id);saveMapState();}
-  function selectMarker(id){mapState.selectedMarkerId=id;document.querySelectorAll('.marker').forEach(el=>el.classList.toggle('selected',parseInt(el.dataset.id)===id));}
-  function deleteSelectedMarker(){if(mapState.selectedMarkerId===null)return;mapState.markers=mapState.markers.filter(m=>m.id!==mapState.selectedMarkerId);mapState.selectedMarkerId=null;renderAllMarkers();saveMapState();}
-  function resetMapView(){mapState.scale=0.45;mapState.offsetX=0;mapState.offsetY=0;applyTransform();saveMapState();}
-  function updateMapSize(){applyTransform();}
-  mapWrapper.addEventListener('mousedown',e=>{if(e.target.closest('.marker'))return;if(e.button!==0)return;isPanning=true;hasMoved=false;panStart={x:e.clientX,y:e.clientY};panStartOffset={x:mapState.offsetX,y:mapState.offsetY};e.preventDefault();});
-  mapWrapper.addEventListener('click',e=>{if(!hasMoved&&!e.target.closest('.marker')){const c=screenToImageCoords(e.clientX,e.clientY);if(c.x>=0&&c.y>=0&&c.x<=100&&c.y<=100)addMarker(document.getElementById('markerType').value,c.x,c.y);}});
-  mapWrapper.addEventListener('wheel',e=>{e.preventDefault();const r=mapWrapper.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,zf=e.deltaY<0?1.08:0.92,ns=Math.min(2.5,Math.max(0.2,mapState.scale*zf)),sc=ns/mapState.scale;mapState.offsetX=mx-(mx-mapState.offsetX)*sc;mapState.offsetY=my-(my-mapState.offsetY)*sc;mapState.scale=ns;applyTransform();saveMapState();});
-  window.addEventListener('keydown',e=>{if(e.key==='Delete')deleteSelectedMarker();});
-  mapImage.addEventListener('load',()=>{updateMapSize();mapPlaceholder.style.display='none';mapImage.style.display='block';});
+
+  window.resetMapImage = function() {
+    mapImage.src = DEFAULT_MAP_URL;
+    document.getElementById('mapUrlInput').value = '';
+    setTimeout(updateMapSize, 100);
+  };
+
+  function loadMapState() {
+    const saved = currentUser ? users[currentUser].markers : JSON.parse(localStorage.getItem('genshin_map_v2') || 'null');
+    if (saved && saved.length > 0) mapState.markers = saved;
+    applyTransform();
+    renderAllMarkers();
+  }
+
+  function saveMapState() {
+    if (currentUser) { 
+      users[currentUser].markers = mapState.markers; 
+      saveUsers(); 
+    } else { 
+      localStorage.setItem('genshin_map_v2', JSON.stringify(mapState.markers)); 
+    }
+  }
+
+  function applyTransform() { 
+    mapImage.style.transform = `translate(${mapState.offsetX}px, ${mapState.offsetY}px) scale(${mapState.scale})`; 
+    updateAllMarkerPositions(); 
+  }
+
+  function getImageNaturalSize() { 
+    return { width: mapImage.naturalWidth || 2400, height: mapImage.naturalHeight || 1600 }; 
+  }
+
+  function screenToImageCoords(sx, sy) {
+    const r = mapWrapper.getBoundingClientRect();
+    const mx = sx - r.left, my = sy - r.top;
+    const s = getImageNaturalSize();
+    const iw = s.width * mapState.scale, ih = s.height * mapState.scale;
+    return {
+      x: Math.min(100, Math.max(0, (mx - mapState.offsetX) / iw * 100)),
+      y: Math.min(100, Math.max(0, (my - mapState.offsetY) / ih * 100))
+    };
+  }
+
+  function imageToScreenCoords(px, py) {
+    const s = getImageNaturalSize();
+    return {
+      left: mapState.offsetX + (px / 100) * (s.width * mapState.scale),
+      top: mapState.offsetY + (py / 100) * (s.height * mapState.scale)
+    };
+  }
+
+  function createMarkerElement(m) {
+    const el = document.createElement('div');
+    el.className = `marker marker-${m.type}`;
+    el.dataset.id = m.id;
+    const icons = {'обычная':'🔵','анемокул':'🍃','геокул':'🪨','электрокул':'⚡','дендрокул':'🌿','сундук':'📦','загадка':'🧩'};
+    el.textContent = icons[m.type] || '📍';
+    el.title = m.type;
+    el.addEventListener('mousedown', e => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+      selectMarker(m.id);
+      dragMarker = m;
+      dragStartPos = { x: e.clientX, y: e.clientY };
+      dragStartMarkerPos = { x: m.x, y: m.y };
+    });
+    return el;
+  }
+
+  window.addEventListener('mousemove', e => {
+    if (dragMarker) {
+      const dx = e.clientX - dragStartPos.x;
+      const dy = e.clientY - dragStartPos.y;
+      const s = getImageNaturalSize();
+      dragMarker.x = Math.min(100, Math.max(0, dragStartMarkerPos.x + (dx / (s.width * mapState.scale)) * 100));
+      dragMarker.y = Math.min(100, Math.max(0, dragStartMarkerPos.y + (dy / (s.height * mapState.scale)) * 100));
+      updateAllMarkerPositions();
+      saveMapState();
+    } else if (isPanning) {
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
+      mapState.offsetX = panStartOffset.x + dx;
+      mapState.offsetY = panStartOffset.y + dy;
+      applyTransform();
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    dragMarker = null;
+    if (isPanning) { isPanning = false; saveMapState(); }
+  });
+
+  function updateMarkerPosition(el, m) {
+    const p = imageToScreenCoords(m.x, m.y);
+    el.style.left = p.left + 'px';
+    el.style.top = p.top + 'px';
+  }
+
+  function updateAllMarkerPositions() {
+    mapOverlay.querySelectorAll('.marker').forEach(el => {
+      const id = parseInt(el.dataset.id);
+      const m = mapState.markers.find(mm => mm.id === id);
+      if (m) updateMarkerPosition(el, m);
+    });
+  }
+
+  function renderAllMarkers() {
+    mapOverlay.innerHTML = '';
+    mapState.markers.forEach(m => {
+      const el = createMarkerElement(m);
+      mapOverlay.appendChild(el);
+      updateMarkerPosition(el, m);
+      if (m.id === mapState.selectedMarkerId) el.classList.add('selected');
+    });
+  }
+
+  function addMarker(type, x, y) {
+    const nm = { id: Date.now(), type, x, y };
+    mapState.markers.push(nm);
+    const el = createMarkerElement(nm);
+    mapOverlay.appendChild(el);
+    updateMarkerPosition(el, nm);
+    selectMarker(nm.id);
+    saveMapState();
+  }
+
+  function selectMarker(id) {
+    mapState.selectedMarkerId = id;
+    document.querySelectorAll('.marker').forEach(el => el.classList.toggle('selected', parseInt(el.dataset.id) === id));
+  }
+
+  function deleteSelectedMarker() {
+    if (mapState.selectedMarkerId === null) return;
+    mapState.markers = mapState.markers.filter(m => m.id !== mapState.selectedMarkerId);
+    mapState.selectedMarkerId = null;
+    renderAllMarkers();
+    saveMapState();
+  }
+
+  function resetMapView() {
+    mapState.scale = 0.45;
+    mapState.offsetX = 0;
+    mapState.offsetY = 0;
+    applyTransform();
+    saveMapState();
+  }
+
+  function updateMapSize() { applyTransform(); }
+
+  mapWrapper.addEventListener('mousedown', e => {
+    if (e.target.closest('.marker')) return;
+    if (e.button !== 0) return;
+    isPanning = true;
+    hasMoved = false;
+    panStart = { x: e.clientX, y: e.clientY };
+    panStartOffset = { x: mapState.offsetX, y: mapState.offsetY };
+    e.preventDefault();
+  });
+
+  mapWrapper.addEventListener('click', e => {
+    if (!hasMoved && !e.target.closest('.marker')) {
+      const c = screenToImageCoords(e.clientX, e.clientY);
+      if (c.x >= 0 && c.y >= 0 && c.x <= 100 && c.y <= 100) {
+        addMarker(document.getElementById('markerType').value, c.x, c.y);
+      }
+    }
+  });
+
+  mapWrapper.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = mapWrapper.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    const zf = e.deltaY < 0 ? 1.08 : 0.92;
+    const ns = Math.min(2.5, Math.max(0.2, mapState.scale * zf));
+    const sc = ns / mapState.scale;
+    mapState.offsetX = mx - (mx - mapState.offsetX) * sc;
+    mapState.offsetY = my - (my - mapState.offsetY) * sc;
+    mapState.scale = ns;
+    applyTransform();
+    saveMapState();
+  });
+
+  window.addEventListener('keydown', e => { if (e.key === 'Delete') deleteSelectedMarker(); });
+  mapImage.addEventListener('load', () => { updateMapSize(); });
   loadMapState();
 
-  // ==================== МИНИ-ИГРЫ ====================
-  let memoryCards=[],memoryFlipped=[],memoryMatched=new Set(),memoryLocked=false;
-  const emojis=['🍎','🍊','🍋','🍇','🍓','🍒','🥝','🍑'];
+  // ==================== МИНИ-ИГРЫ (ИСПРАВЛЕННЫЕ) ====================
+  let memoryCards = [];
+  let memoryFlipped = [];
+  let memoryMatched = new Set();
+  let memoryLocked = false;
+  const emojis = ['🍎','🍊','🍋','🍇','🍓','🍒','🥝','🍑'];
 
   function canPlayGame(type) {
     if (!currentUser) { alert('Войдите в аккаунт!'); return false; }
@@ -361,12 +604,17 @@
   }
 
   function startMemoryGame() {
-    if (!canPlayGame('memory')) return;
     memoryLocked = false;
     const pairs = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
     memoryCards = pairs.map((emoji, i) => ({ emoji, id: i }));
-    memoryFlipped = []; memoryMatched.clear();
+    memoryFlipped = [];
+    memoryMatched.clear();
     renderMemoryGrid();
+  }
+
+  function restartMemoryGame() {
+    if (!canPlayGame('memory')) return;
+    startMemoryGame();
     incrementGamePlay('memory');
   }
 
@@ -386,59 +634,89 @@
   }
 
   function flipMemoryCard(id) {
-    if (memoryLocked || memoryFlipped.length >= 2 || memoryFlipped.includes(id) || memoryMatched.has(id)) return;
+    if (memoryLocked) return;
+    if (memoryFlipped.length >= 2) return;
+    if (memoryFlipped.includes(id)) return;
+    if (memoryMatched.has(id)) return;
+    
     memoryFlipped.push(id);
     renderMemoryGrid();
+    
     if (memoryFlipped.length === 2) {
       memoryLocked = true;
       const [a, b] = memoryFlipped;
       if (memoryCards[a].emoji === memoryCards[b].emoji) {
-        memoryMatched.add(a); memoryMatched.add(b);
-        memoryFlipped = []; memoryLocked = false;
+        memoryMatched.add(a);
+        memoryMatched.add(b);
+        memoryFlipped = [];
+        memoryLocked = false;
         addPoints(10);
         renderMemoryGrid();
         if (memoryMatched.size === memoryCards.length) {
-          setTimeout(() => { alert('🎉 Победа! +50 очков'); addPoints(50); startMemoryGame(); }, 300);
+          setTimeout(() => { 
+            alert('🎉 Победа! +50 очков'); 
+            addPoints(50); 
+            restartMemoryGame(); 
+          }, 300);
         }
       } else {
-        setTimeout(() => { memoryFlipped = []; memoryLocked = false; renderMemoryGrid(); }, 700);
+        setTimeout(() => { 
+          memoryFlipped = []; 
+          memoryLocked = false; 
+          renderMemoryGrid(); 
+        }, 700);
       }
     }
   }
 
-  let guessNumber = 0, guessAttempts = 0, guessActive = false;
+  let guessNumber = 0;
+  let guessAttempts = 0;
+  let guessActive = false;
 
   function startGuessGame() {
-    if (!canPlayGame('guess')) return;
     guessNumber = Math.floor(Math.random() * 100) + 1;
-    guessAttempts = 0; guessActive = true;
+    guessAttempts = 0;
+    guessActive = true;
     document.getElementById('guessHint').textContent = 'Попыток: 0 / 10';
     document.getElementById('guessInput').value = '';
+  }
+
+  function restartGuessGame() {
+    if (!canPlayGame('guess')) return;
+    startGuessGame();
     incrementGamePlay('guess');
   }
 
   function makeGuess() {
-    if (!guessActive) return alert('Начните новую игру!');
+    if (!guessActive) { alert('Начните новую игру!'); return; }
     const val = parseInt(document.getElementById('guessInput').value);
-    if (!val || val < 1 || val > 100) return alert('Введите число от 1 до 100');
+    if (!val || val < 1 || val > 100) { alert('Введите число от 1 до 100'); return; }
     guessAttempts++;
     document.getElementById('guessHint').textContent = `Попыток: ${guessAttempts} / 10`;
+    
     if (val === guessNumber) {
       const points = Math.max(10, 100 - guessAttempts * 10);
       alert(`🎉 Угадал! +${points} очков`);
       addPoints(points);
       guessActive = false;
-      startGuessGame();
+      restartGuessGame();
     } else {
-      document.getElementById('guessHint').textContent = `Попыток: ${guessAttempts} / 10 | ${val > guessNumber ? '📉 Меньше' : '📈 Больше'}`;
-      if (guessAttempts >= 10) { alert(`Не угадал. Число: ${guessNumber}`); guessActive = false; startGuessGame(); }
+      const hint = val > guessNumber ? '📉 Меньше' : '📈 Больше';
+      document.getElementById('guessHint').textContent = `Попыток: ${guessAttempts} / 10 | ${hint}`;
+      if (guessAttempts >= 10) { 
+        alert(`Не угадал. Число: ${guessNumber}`); 
+        guessActive = false; 
+        restartGuessGame(); 
+      }
     }
   }
 
   // ==================== ЛИДЕРБОРД ====================
   function renderLeaderboard() {
     const list = document.getElementById('leaderboardList');
-    const sorted = Object.entries(users).sort((a, b) => (b[1].points || 0) - (a[1].points || 0)).slice(0, 20);
+    const sorted = Object.entries(users)
+      .sort((a, b) => (b[1].points || 0) - (a[1].points || 0))
+      .slice(0, 20);
     list.innerHTML = sorted.map(([name, data], i) => `
       <div class="leaderboard-item">
         <span>${i+1}. ${name}</span>
@@ -463,12 +741,13 @@
   function buyWish() {
     if (!currentUser) return alert('Войдите в аккаунт!');
     if (spendPoints(100)) {
-      alert('нет');
+      alert('Занет');
     } else {
-      alert('нет');
+      alert('Неь');
     }
   }
 
+  // Инициализация
   startMemoryGame();
   startGuessGame();
   updateUI();

@@ -377,6 +377,7 @@
   let mapState = { scale: 0.45, offsetX: 0, offsetY: 0, markers: [], selectedMarkerId: null };
   let isPanning = false, panStart = {x:0, y:0}, panStartOffset = {x:0, y:0}, hasMoved = false;
   let dragMarker = null, dragStartPos = null, dragStartMarkerPos = null;
+  let dragStartScale = null;
   const DEFAULT_MAP_URL = 'https://cdn.discordapp.com/attachments/1420821297700671560/1513235705307074710/image.png?ex=6a26fe12&is=6a25ac92&hm=2b8d9dc1a08ed5b713462e005a12f94c5f8e70b122921534afcf4dee520f8ec1&';
 
   function handleMapError() {
@@ -461,24 +462,25 @@
   }
 
   window.addEventListener('mousemove', e => {
-    if (dragMarker) {
-      e.preventDefault();
-      const dx = e.clientX - dragStartPos.x;
-      const dy = e.clientY - dragStartPos.y;
-      const s = getImageNaturalSize();
-      const imgW = s.width * mapState.scale;
-      const imgH = s.height * mapState.scale;
-      
-      // Пересчёт смещения в проценты
-      const deltaXPercent = (dx / imgW) * 100;
-      const deltaYPercent = (dy / imgH) * 100;
-      
-      dragMarker.x = Math.min(100, Math.max(0, dragStartMarkerPos.x + deltaXPercent));
-      dragMarker.y = Math.min(100, Math.max(0, dragStartMarkerPos.y + deltaYPercent));
-      
-      updateAllMarkerPositions();
-      saveMapState();
-    } else if (isPanning) {
+      if (dragMarker) {
+          e.preventDefault();
+          const dx = e.clientX - dragStartPos.x;
+          const dy = e.clientY - dragStartPos.y;
+          const s = getImageNaturalSize();
+          const currentScale = dragStartScale || mapState.scale;
+          const imgW = s.width * currentScale;
+          const imgH = s.height * currentScale;
+          
+          // Переводим пиксели в проценты относительно размеров изображения
+          const deltaXPercent = (dx / imgW) * 100;
+          const deltaYPercent = (dy / imgH) * 100;
+          
+          dragMarker.x = Math.min(100, Math.max(0, dragStartMarkerPos.x + deltaXPercent));
+          dragMarker.y = Math.min(100, Math.max(0, dragStartMarkerPos.y + deltaYPercent));
+          
+          updateAllMarkerPositions();
+          saveMapState();
+      } else if (isPanning) {
       const dx = e.clientX - panStart.x;
       const dy = e.clientY - panStart.y;
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
@@ -489,8 +491,15 @@
   });
 
   window.addEventListener('mouseup', () => {
-    dragMarker = null;
-    if (isPanning) { isPanning = false; saveMapState(); }
+      if (dragMarker) {
+          dragMarker = null;
+          dragStartScale = null;
+          saveMapState();
+      }
+      if (isPanning) { 
+          isPanning = false; 
+          saveMapState(); 
+      }
   });
 
   function updateMarkerPosition(el, m) {

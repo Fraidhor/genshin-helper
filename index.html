@@ -415,6 +415,7 @@
 
   function imageToScreenCoords(px, py) {
     const s = getImageNaturalSize();
+    // БЕЗ ОГРАНИЧЕНИЙ – координаты могут быть отрицательными или > размера карты
     return {
       left: mapState.offsetX + (px / 100) * (s.width * mapState.scale),
       top: mapState.offsetY + (py / 100) * (s.height * mapState.scale)
@@ -451,13 +452,9 @@
       const imgW = s.width * mapState.scale;
       const imgH = s.height * mapState.scale;
       
-      const newX = Math.min(100, Math.max(0, dragStartMarkerPos.x + (dx / imgW) * 100));
-      const newY = Math.min(100, Math.max(0, dragStartMarkerPos.y + (dy / imgH) * 100));
-      
-      console.log('🔄 Перетаскивание: dx=' + dx + ' dy=' + dy + ' imgW=' + imgW + ' imgH=' + imgH + ' newX=' + newX + ' newY=' + newY);
-      
-      dragMarker.x = newX;
-      dragMarker.y = newY;
+      // БЕЗ ОГРАНИЧЕНИЙ – координаты могут быть любыми
+      dragMarker.x = dragStartMarkerPos.x + (dx / imgW) * 100;
+      dragMarker.y = dragStartMarkerPos.y + (dy / imgH) * 100;
       
       updateAllMarkerPositions();
       saveMapState();
